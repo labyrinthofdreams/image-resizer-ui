@@ -130,10 +130,6 @@ void MainWindow::on_buttonResize_clicked()
             image.second.save(out, 0, quality);
             ++saved;
         }
-        else {
-            ui->plainTextEditLog->appendPlainText(tr("Skipped %1")
-                                                  .arg(fileInfo.absoluteFilePath()));
-        }
     }
 
     ui->plainTextEditLog->appendPlainText(tr("Processed %1 images (Skipped %2)")
