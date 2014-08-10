@@ -148,7 +148,7 @@
           <widget class="QComboBox" name="comboBox">
            <item>
             <property name="text">
-             <string>Manual</string>
+             <string>Custom</string>
             </property>
            </item>
            <item>
