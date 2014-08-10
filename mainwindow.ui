@@ -17,7 +17,23 @@
    <string>Image Resize</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QVBoxLayout" name="verticalLayout_4">
+   <layout class="QVBoxLayout" name="verticalLayout_5">
+    <item>
+     <widget class="QGroupBox" name="groupBox_4">
+      <property name="title">
+       <string>Info</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Add images by drag 'n dropping or by selecting a directory</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
     <item>
      <widget class="QGroupBox" name="groupBox">
       <property name="title">
@@ -233,6 +249,5 @@
  <connections/>
  <buttongroups>
   <buttongroup name="buttonGroup"/>
-  <buttongroup name="buttonGroup_2"/>
  </buttongroups>
 </ui>
