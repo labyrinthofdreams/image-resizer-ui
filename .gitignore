@@ -2,6 +2,7 @@
 !.gitignore
 !*.cpp
 !*.hpp
+!*.md
 !*.pro
 !*.txt
 !*.ui
