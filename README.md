@@ -4,7 +4,7 @@ Image Resizer UI
 Resize images to a desired width or height. Images may be selected from a folder
 or by drag 'n dropping them.
 
-<img src="http://i.imgur.com/oGeTVWk.png">
+![Image Resizer UI](http://i.imgur.com/oGeTVWk.png "Image Resizer UI")
 
 Compilation requirements:
 
