@@ -33,7 +33,6 @@ private:
 
     QList<QPair<QFileInfo, QImage> > images;
 
-    QImage resizeImage(const QImage& image);
     bool enqueue(const QFileInfo& fileInfo);
 
     void dragEnterEvent(QDragEnterEvent *event) override;

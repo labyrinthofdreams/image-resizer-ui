@@ -11,9 +11,30 @@
 #include <QMimeData>
 #include <QPair>
 #include <QString>
+#include <QtConcurrent>
 #include <QUrl>
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
+
+class ScaleToWidth {
+    int _width;
+
+public:
+    ScaleToWidth(int width) : _width(width) {}
+    void operator()(QPair<QFileInfo, QImage>& image) {
+        image.second = image.second.scaledToWidth(_width, Qt::SmoothTransformation);
+    }
+};
+
+class ScaleToHeight {
+    int _height;
+
+public:
+    ScaleToHeight(int height) : _height(height) {}
+    void operator()(QPair<QFileInfo, QImage>& image) {
+        image.second = image.second.scaledToHeight(_height, Qt::SmoothTransformation);
+    }
+};
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -48,24 +69,6 @@ void MainWindow::on_buttonBrowseInDir_clicked()
 
     ui->plainTextEditLog->appendPlainText(tr("Added %1 images from %2").arg(saved).arg(inDir.absolutePath()));
     ui->statusBar->showMessage(tr("Images to process: %1").arg(images.size()));
-}
-
-QImage MainWindow::resizeImage(const QImage& image)
-{
-    if(!ui->checkBoxResizeTo->isChecked()) {
-        return image;
-    }
-
-    if(ui->radioResizeWidth->isChecked()) {
-        return image.scaledToWidth(ui->lineEditResize->text().toInt(),
-                                   Qt::SmoothTransformation);
-    }
-    else if(ui->radioResizeHeight->isChecked()) {
-        return image.scaledToHeight(ui->lineEditResize->text().toInt(),
-                                    Qt::SmoothTransformation);
-    }
-
-    return image;
 }
 
 bool MainWindow::enqueue(const QFileInfo& fileInfo)
@@ -115,8 +118,13 @@ void MainWindow::on_buttonResize_clicked()
     }
 
     // Resize images
-    for(auto& image : images) {
-        image.second = resizeImage(image.second);
+    if(ui->checkBoxResizeTo->isChecked()) {
+        if(ui->radioResizeWidth->isChecked()) {
+            QtConcurrent::blockingMap(images.begin(), images.end(), ScaleToWidth(ui->lineEditResize->text().toInt()));
+        }
+        else if(ui->radioResizeHeight->isChecked()) {
+            QtConcurrent::blockingMap(images.begin(), images.end(), ScaleToHeight(ui->lineEditResize->text().toInt()));
+        }
     }
 
     // Save to output directory
