@@ -5,8 +5,6 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
-#include <QFuture>
-#include <QFutureWatcher>
 #include <QImage>
 #include <QList>
 #include <QMap>
@@ -52,13 +50,9 @@ public:
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    images(),
-    futureWatcher()
+    images()
 {
     ui->setupUi(this);
-
-    connect(&futureWatcher, SIGNAL(finished()),
-            this,           SLOT(resizeFinished()));
 }
 
 MainWindow::~MainWindow()
@@ -122,6 +116,12 @@ void MainWindow::dropEvent(QDropEvent *event) {
 
 void MainWindow::on_buttonResize_clicked()
 {
+    const auto outputPath =
+            QFileDialog::getExistingDirectory(this, tr("Select output directory"));
+    if(outputPath.isEmpty()) {
+        return;
+    }
+
     if(images.empty()) {
         QMessageBox::warning(this, tr("Nothing to process"),
                              tr("Add images and try again"));
@@ -129,20 +129,55 @@ void MainWindow::on_buttonResize_clicked()
     }
 
     // Resize images
-    QFuture<void> future;
+    ui->plainTextEditLog->appendPlainText(tr("Resizing images..."));
     if(ui->radioResizeWidth->isChecked()) {
-        future = QtConcurrent::map(images.begin(), images.end(),
-                                   ScaleToWidth(ui->spinBoxResizeTo->value()));
+        QtConcurrent::blockingMap(images.begin(), images.end(),
+                                  ScaleToWidth(ui->spinBoxResizeTo->value()));
 
     }
     else if(ui->radioResizeHeight->isChecked()) {
-        future = QtConcurrent::map(images.begin(), images.end(),
-                                   ScaleToHeight(ui->spinBoxResizeTo->value()));
+        QtConcurrent::blockingMap(images.begin(), images.end(),
+                                  ScaleToHeight(ui->spinBoxResizeTo->value()));
     }
 
-    futureWatcher.setFuture(future);
+    ui->plainTextEditLog->appendPlainText(tr("Saving images..."));
 
-    ui->plainTextEditLog->appendPlainText(tr("Resizing %1 images...").arg(images.size()));
+    // Save to output directory
+    const auto formatIdx = ui->comboBoxFormat->currentIndex();
+    const QString format = ui->comboBoxFormat->currentText();
+    const auto quality = ui->spinBoxQuality->value();
+    int saved = 0;
+    const QDir outDir(outputPath);
+    for(const auto& image : images) {
+        const QFileInfo& fileInfo = image.first;
+        const auto fileNameNoSuffix = fileInfo.completeBaseName();
+        QString suffix = fileInfo.suffix();
+        if(format == "JPEG") {
+            suffix = "jpg";
+        }
+        else if(format == "PNG") {
+            suffix = "png";
+        }
+
+        const QString fileName = QString("%1.%2").arg(fileNameNoSuffix).arg(suffix);
+        const QString out = outDir.absoluteFilePath(fileName);
+        qDebug() << out << format.toLatin1().constData();
+        if(ui->checkBoxOverwrite->isChecked() || !QFile::exists(out)) {
+            if(formatIdx == 0) {
+                // Auto-detect format
+                image.second.save(out, 0, quality);
+            }
+            else {
+                image.second.save(out, format.toLatin1().constData(), quality);
+            }
+            ++saved;
+        }
+    }
+
+    ui->plainTextEditLog->appendPlainText(tr("Processed %1 images (skipped: %2)")
+                                          .arg(saved).arg(images.size() - saved));
+    ui->statusBar->showMessage(tr("Processed %1 of %2 images")
+                               .arg(saved).arg(images.size()));
 }
 
 void MainWindow::on_buttonClear_clicked()
@@ -151,41 +186,6 @@ void MainWindow::on_buttonClear_clicked()
 
     ui->plainTextEditLog->clear();
     ui->statusBar->showMessage(tr("Images to process: 0"));
-}
-
-void MainWindow::resizeFinished()
-{
-    const auto outputPath =
-            QFileDialog::getExistingDirectory(this, tr("Select output directory"));
-    if(outputPath.isEmpty()) {
-        return;
-    }
-
-    ui->plainTextEditLog->appendPlainText(tr("Saving images..."));
-
-    // Save to output directory
-    const auto quality = ui->spinBoxQuality->value();
-    int saved = 0;
-    const QDir outDir(outputPath);
-    for(const auto& image : images) {
-        const QFileInfo& fileInfo = image.first;
-        const QString out = outDir.absoluteFilePath(fileInfo.fileName());
-        if(ui->checkBoxOverwrite->isChecked() || !QFile::exists(out)) {
-            image.second.save(out, 0, quality);
-            ++saved;
-        }
-    }
-
-    ui->plainTextEditLog->appendPlainText(tr("Processed %1 images (Skipped %2)")
-                                          .arg(saved).arg(images.size() - saved));
-    ui->statusBar->showMessage(tr("Processed %1 of %2 images")
-                               .arg(saved).arg(images.size()));
-
-    if(images.size() == saved) {
-        images.clear();
-
-        ui->plainTextEditLog->appendPlainText(tr("Cleared queue..."));
-    }
 }
 
 void MainWindow::on_comboBox_activated(const QString &arg1)

@@ -1,7 +1,6 @@
 #ifndef MAINWINDOW_HPP
 #define MAINWINDOW_HPP
 
-#include <QFutureWatcher>
 #include <QList>
 #include <QMainWindow>
 
@@ -29,16 +28,12 @@ private slots:
 
     void on_buttonClear_clicked();
 
-    void resizeFinished();
-
     void on_comboBox_activated(const QString &arg1);
 
 private:
     Ui::MainWindow *ui;
 
     QList<QPair<QFileInfo, QImage> > images;
-
-    QFutureWatcher<void> futureWatcher;
 
     bool enqueue(const QFileInfo& fileInfo);
 
