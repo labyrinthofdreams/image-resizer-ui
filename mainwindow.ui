@@ -102,25 +102,19 @@
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
-          <widget class="QCheckBox" name="checkBoxResizeTo">
+          <widget class="QLabel" name="label_4">
            <property name="text">
             <string>Resize to:</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="lineEditResize">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
+          <widget class="QSpinBox" name="spinBoxResizeTo">
+           <property name="minimum">
+            <number>20</number>
            </property>
-           <property name="maximumSize">
-            <size>
-             <width>60</width>
-             <height>16777215</height>
-            </size>
+           <property name="maximum">
+            <number>7680</number>
            </property>
           </widget>
          </item>
@@ -145,6 +139,60 @@
            <attribute name="buttonGroup">
             <string notr="true">buttonGroup</string>
            </attribute>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboBox">
+           <item>
+            <property name="text">
+             <string>Manual</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>DVD (NTSC)</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>DVD (PAL)</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Widescreen DVD</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>HD 720p</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>HD 1080p</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>HD 2k Flat</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>HD 2k</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>UHD 4k</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>UHD 8k</string>
+            </property>
+           </item>
           </widget>
          </item>
          <item>

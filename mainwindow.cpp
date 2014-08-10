@@ -5,8 +5,11 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFuture>
+#include <QFutureWatcher>
 #include <QImage>
 #include <QList>
+#include <QMap>
 #include <QMessageBox>
 #include <QMimeData>
 #include <QPair>
@@ -15,6 +18,16 @@
 #include <QUrl>
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
+
+static QMap<QString, int> resolutionWidth {{"DVD (NTSC)", 700}, {"DVD (PAL)", 720},
+                                            {"Widescreen DVD", 720}, {"HD 720p", 1280},
+                                            {"HD 1080p", 1920}, {"HD 2k Flat", 1998},
+                                            {"HD 2k", 2048}, {"UHD 4k", 4096}, {"UHD 8k", 7680}};
+
+static QMap<QString, int> resolutionHeight {{"DVD (NTSC)", 480}, {"DVD (PAL)", 576},
+                                            {"Widescreen DVD", 480}, {"HD 720p", 720},
+                                            {"HD 1080p", 1080}, {"HD 2k Flat", 1080},
+                                            {"HD 2k", 1080}, {"UHD 4k", 2160}, {"UHD 8k", 4320}};
 
 class ScaleToWidth {
     int _width;
@@ -39,9 +52,13 @@ public:
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    images()
+    images(),
+    futureWatcher()
 {
     ui->setupUi(this);
+
+    connect(&futureWatcher, SIGNAL(finished()),
+            this,           SLOT(resizeFinished()));
 }
 
 MainWindow::~MainWindow()
@@ -111,21 +128,40 @@ void MainWindow::on_buttonResize_clicked()
         return;
     }
 
+    // Resize images
+    QFuture<void> future;
+    if(ui->radioResizeWidth->isChecked()) {
+        future = QtConcurrent::map(images.begin(), images.end(),
+                                   ScaleToWidth(ui->spinBoxResizeTo->value()));
+
+    }
+    else if(ui->radioResizeHeight->isChecked()) {
+        future = QtConcurrent::map(images.begin(), images.end(),
+                                   ScaleToHeight(ui->spinBoxResizeTo->value()));
+    }
+
+    futureWatcher.setFuture(future);
+
+    ui->plainTextEditLog->appendPlainText(tr("Resizing %1 images...").arg(images.size()));
+}
+
+void MainWindow::on_buttonClear_clicked()
+{
+    images.clear();
+
+    ui->plainTextEditLog->clear();
+    ui->statusBar->showMessage(tr("Images to process: 0"));
+}
+
+void MainWindow::resizeFinished()
+{
     const auto outputPath =
             QFileDialog::getExistingDirectory(this, tr("Select output directory"));
     if(outputPath.isEmpty()) {
         return;
     }
 
-    // Resize images
-    if(ui->checkBoxResizeTo->isChecked()) {
-        if(ui->radioResizeWidth->isChecked()) {
-            QtConcurrent::blockingMap(images.begin(), images.end(), ScaleToWidth(ui->lineEditResize->text().toInt()));
-        }
-        else if(ui->radioResizeHeight->isChecked()) {
-            QtConcurrent::blockingMap(images.begin(), images.end(), ScaleToHeight(ui->lineEditResize->text().toInt()));
-        }
-    }
+    ui->plainTextEditLog->appendPlainText(tr("Saving images..."));
 
     // Save to output directory
     const auto quality = ui->spinBoxQuality->value();
@@ -147,13 +183,17 @@ void MainWindow::on_buttonResize_clicked()
 
     if(images.size() == saved) {
         images.clear();
+
+        ui->plainTextEditLog->appendPlainText(tr("Cleared queue..."));
     }
 }
 
-void MainWindow::on_buttonClear_clicked()
+void MainWindow::on_comboBox_activated(const QString &arg1)
 {
-    images.clear();
-
-    ui->plainTextEditLog->clear();
-    ui->statusBar->showMessage(tr("Images to process: 0"));
+    if(ui->radioResizeWidth->isChecked()) {
+        ui->spinBoxResizeTo->setValue(resolutionWidth.value(arg1));
+    }
+    else if(ui->radioResizeHeight->isChecked()) {
+        ui->spinBoxResizeTo->setValue(resolutionHeight.value(arg1));
+    }
 }
