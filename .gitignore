@@ -3,4 +3,5 @@
 !*.cpp
 !*.hpp
 !*.pro
+!*.txt
 !*.ui
